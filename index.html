@@ -632,8 +632,8 @@ function renderTiles(){
   $('favs').classList.toggle('gs',!!sl);
   if(sl){setH($('favsH'),'<span class="pill">LIVE</span> SPURS GAME STATS');setH($('tiles'),gameStats(sl));needSum(sl);return}
   setH($('favsH'),'MY TEAMS');
-  var A=all(),h='';
-  FAV_LIST.forEach(function(f){
+  var A=all(),cards=[];
+  FAV_LIST.forEach(function(f,idx){
     if(f.n==='San Antonio Spurs'||f.lg[0]==='wnba')return;
     var has=function(t){return t.name.indexOf(f.n)>-1};
     var gs=A.filter(function(g){return f.lg.indexOf(g.lg)>-1&&g.teams.some(has)}).sort(function(a,b){return a.date-b.date});
@@ -649,7 +649,8 @@ function renderTiles(){
     else if(next){var y=sd(next);l1='Next: <b>'+y.p+esc(y.o.name)+'</b><br>'+fD(next.date)+' · '+fT(next.date)+' · '+LBL[next.lg]}
     if(last){var z=sd(last),w=z.m.win||Number(z.m.score)>Number(z.o.score);
       l2='<br>Last: <b class="'+(w?'W':'L')+'">'+(w?'W':'L')+' '+esc(z.m.score)+'–'+esc(z.o.score)+'</b> '+z.p+esc(z.o.name)}
-    h+='<div class="tile'+(live?' in':'')+(cond?' rz':'')+'"><div class="h">'+(logo?'<img class="team-logo" src="'+esc(logo)+'" alt="">':'')+'<span>'+f.s+'</span></div><div class="m">'+l1+l2+'</div></div>';
+    var html='<div class="tile'+(live?' in':'')+(cond?' rz':'')+'"><div class="h">'+(logo?'<img class="team-logo" src="'+esc(logo)+'" alt="">':'')+'<span>'+f.s+'</span></div><div class="m">'+l1+l2+'</div></div>';
+    cards.push({when:live?-1:(next?next.date.getTime():Infinity),order:idx,html:html});
   });
   var sp=si.last&&si.last.teams.filter(isSpurs)[0],op=si.last&&si.last.teams.filter(function(t){return !isSpurs(t)})[0];
   var lastHtml=sp&&op?'<b class="'+((sp.win||Number(sp.score)>Number(op.score))?'W':'L')+'">'+((sp.win||Number(sp.score)>Number(op.score))?'W':'L')+' '+esc(sp.score)+'–'+esc(op.score)+'</b> '+(sp.home?'vs ':'@ ')+esc(op.name):'—';
@@ -657,8 +658,9 @@ function renderTiles(){
   var stk=spursStreak(),rec=si.rec||'—';
   var nextHtml=next&&oppNext?'<b>'+(homeNext.home?'vs ':'@ ') +esc(oppNext.name)+'</b> · <span id="spursMiniCd" data-t="'+next.date.getTime()+'">--</span>':'—';
   var mini='<div class="tile spurs-mini"><div class="h"><img class="team-logo" src="https://a.espncdn.com/i/teamlogos/nba/500/sa.png" alt="Spurs"><span>SAN ANTONIO SPURS</span></div><div class="m"><div>Record: <b>'+esc(rec)+'</b>'+(stk?' <em class="stk">'+esc(stk)+'</em>':'')+'</div><div>Next: '+nextHtml+'</div><div>Last: '+lastHtml+'</div></div></div>';
-  h=mini+h;
-  setH($('tiles'),h||'<div class="empty">Loading…</div>');
+  cards.push({when:next?next.date.getTime():Infinity,order:0,html:mini});
+  cards.sort(function(a,b){return (a.when-b.when)||(a.order-b.order)});
+  setH($('tiles'),cards.map(function(c){return c.html}).join('')||'<div class="empty">Loading…</div>');
 }
 /* ---- Spurs live game stats (ESPN game summary) ---- */
 var SUM={id:null,t:0,d:null,busy:false,err:''};

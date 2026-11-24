@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Eluere Sports Center · Go Spurs Go</title>
 <!-- Spurs branding: browser tab + Safari Add to Home Screen -->
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="icon" type="image/png" sizes="500x500" href="https://a.espncdn.com/i/teamlogos/nba/500/sa.png">
 <link rel="apple-touch-icon" sizes="180x180" href="spurs-icon.png">
 <meta name="apple-mobile-web-app-title" content="Eluere Sports">
 <meta name="theme-color" content="#08090b">
@@ -172,6 +172,14 @@ body.compact .game{padding:3px 8px;margin-bottom:3px}body.compact .tm img{width:
 .tile .m{font-size:13px;color:var(--silver);margin-top:5px;line-height:1.45}.tile .m b{color:var(--txt)}
 .tile .m b.W{color:var(--silver2)}.tile .m b.L{color:var(--dim)}.tile.in{border-color:#6a3550}.tile.rz{border-color:var(--rz);border-top-color:var(--rz);box-shadow:0 0 12px rgba(255,26,26,.35)}
 .tile .m b.tsc{font:700 20px Oswald,sans-serif;color:var(--silver2)}.tile .rzb{font-size:11px;padding:0 7px;margin-top:3px}.tile .cnd{color:#fff;font-size:12px}
+
+.tile .h img.team-logo{position:static;display:block;flex:0 0 30px;width:30px;height:30px;max-width:30px;max-height:30px;object-fit:contain;transform:none;opacity:1;mask-image:none;-webkit-mask-image:none}
+.tile .h{justify-content:flex-start;text-align:left}.tile .m{text-align:left}.tile img.bg{display:none}
+.spurs-mini .h img.team-logo{width:30px;height:30px;flex-basis:30px}
+.section-filters{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 8px}
+.section-filters button{font-size:13px;padding:4px 9px;min-height:28px;border-radius:6px}
+.section-filters button.on{background:#252a2e;border-color:var(--silver);color:var(--silver2)}
+@media(max-width:700px){.section-filters{gap:4px}.section-filters button{font-size:12px;padding:4px 7px}}
 /* today's cards: rotated start time strip */
 .split .game.td{grid-template-columns:auto minmax(0,1fr) auto}
 .tt{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font:700 24px/1 Oswald,sans-serif;letter-spacing:.03em;color:var(--silver2);padding-left:8px;border-left:1px solid var(--edge)}
@@ -223,8 +231,8 @@ a.watch.lg{font-size:18px;padding:4px 14px;margin-top:8px}
     <section id="favs"><h2 id="favsH">MY TEAMS</h2><div class="tiles" id="tiles"><div class="empty">Loading…</div></div></section>
     <section id="main-sec">
       <div class="split">
-        <div class="half"><h2>TODAY'S GAMES</h2><div class="scroll" id="todayBody"><div class="empty">Loading games…</div></div></div>
-        <div class="half"><h2>UPCOMING 7 DAYS</h2><div class="scroll" id="upBody"><div class="empty">Loading games…</div></div></div>
+        <div class="half"><h2>TODAY'S GAMES</h2><div class="section-filters" id="todayFilters"></div><div class="scroll" id="todayBody"><div class="empty">Loading games…</div></div></div>
+        <div class="half"><h2>UPCOMING 7 DAYS</h2><div class="section-filters" id="upFilters"></div><div class="scroll" id="upBody"><div class="empty">Loading games…</div></div></div>
       </div>
     </section>
   </div>
@@ -271,7 +279,7 @@ var FAV_LIST=[ /* order = priority; Spurs always first. First CORE entries drive
  {n:'Minnesota Lynx',s:'LYNX',lg:['wnba']},{n:'Las Vegas Aces',s:'ACES',lg:['wnba']},
  {n:'New York Liberty',s:'LIBERTY',lg:['wnba']},{n:'Portland Fire',s:'FIRE',lg:['wnba']}];
 var CORE=5;
-var S={lg:'all',std:'nba',stand:{},fav:false,data:{},sched:null,upd:null,streams:null,streamT:0};
+var S={lg:'all',todayLg:'nba',upLg:'nba',std:'nba',stand:{},fav:false,data:{},sched:null,upd:null,streams:null,streamT:0};
 var $=function(i){return document.getElementById(i)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
 var dk=function(d){return new Date(d).toLocaleDateString('en-CA',{timeZone:TZ})};
@@ -570,6 +578,12 @@ function renderSpot(){
   section.classList.toggle('rz',!!redZone(g));
 }
 
+function renderSectionFilters(){
+ var choices=[{id:'all',label:'All'}].concat(LEAGUES.map(function(l){return{id:l.id,label:l.label}}));
+ ['today','up'].forEach(function(which){var key=which==='today'?'todayLg':'upLg',el=$(which==='today'?'todayFilters':'upFilters');if(!el)return;
+ el.innerHTML=choices.map(function(c){return '<button type="button" data-section="'+which+'" data-league="'+c.id+'" class="'+(S[key]===c.id?'on':'')+'">'+esc(c.label)+'</button>'}).join('');});
+}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-section][data-league]');if(!b)return;S[b.getAttribute('data-section')==='today'?'todayLg':'upLg']=b.getAttribute('data-league');render();});
 function render(){
   var g=all().filter(vis),today=dk(new Date()),end=dk(off(7)),back=dk(off(-3));
   var errs=LEAGUES.filter(function(L){return S.data[L.id]&&!S.data[L.id].ok}).map(function(L){
@@ -581,10 +595,12 @@ function render(){
   $('resNba').innerHTML=list(rNba,true,'No recent NBA results for this filter.');
   $('resNfl').innerHTML=(rNfl.length||!rOth.length?list(rNfl,true,'No recent NFL results for this filter.'):'')+(rOth.length?'<div class="subh">OTHER LEAGUES</div>'+list(rOth,true,''):'');
   var loaded=Object.keys(S.data).length>0,eh=errs.join('');
-  var tg=g.filter(function(x){return dk(x.date)===today}).sort(byLgSoon);
-  var up=g.filter(function(x){var d=dk(x.date);return x.state==='pre'&&d>today&&d<=end&&curated(x)}).sort(byGrpSoon);
-  $('todayBody').innerHTML=eh+(loaded?lgList(tg,'No games today for this filter.'):'<div class="empty">Loading games…</div>');
-  $('upBody').innerHTML=loaded?list(up,true,'No favorite or Top 25 games in the next 7 days for this filter.'):'<div class="empty">Loading games…</div>';
+  renderSectionFilters();
+  var source=all();
+  var tg=source.filter(function(x){return dk(x.date)===today&&(S.todayLg==='all'||x.lg===S.todayLg)&&(!S.fav||isFav(x))}).sort(byLgSoon);
+  var up=source.filter(function(x){var d=dk(x.date);return x.state==='pre'&&d>today&&d<=end&&(S.upLg==='all'||x.lg===S.upLg)&&(!S.fav||isFav(x))}).sort(byGrpSoon);
+  $('todayBody').innerHTML=eh+(loaded?lgList(tg,'No '+(S.todayLg==='all'?'':LBL[S.todayLg]+' ')+'games today.'):'<div class="empty">Loading games…</div>');
+  $('upBody').innerHTML=loaded?list(up,true,'No '+(S.upLg==='all'?'':LBL[S.upLg]+' ')+'games in the next 7 days.'):'<div class="empty">Loading games…</div>';
   renderSpot();renderTiles();renderStandings();renderFoot();
 }
 /* ---- live ticker ---- */
@@ -642,14 +658,14 @@ function renderTiles(){
     else if(next){var y=sd(next);l1='Next: <b>'+y.p+esc(y.o.name)+'</b><br>'+fD(next.date)+' · '+fT(next.date)+' · '+LBL[next.lg]}
     if(last){var z=sd(last),w=z.m.win||Number(z.m.score)>Number(z.o.score);
       l2='<br>Last: <b class="'+(w?'W':'L')+'">'+(w?'W':'L')+' '+esc(z.m.score)+'–'+esc(z.o.score)+'</b> '+z.p+esc(z.o.name)}
-    h+='<div class="tile'+(live?' in':'')+(cond?' rz':'')+'">'+(logo?'<img class="bg" src="'+esc(logo)+'" alt="" onerror="this.style.display=\'none\'">':'')+'<div class="h">'+f.s+'</div><div class="m">'+l1+l2+'</div></div>';
+    h+='<div class="tile'+(live?' in':'')+(cond?' rz':'')+'"><div class="h">'+(logo?'<img class="team-logo" src="'+esc(logo)+'" alt="">':'')+'<span>'+f.s+'</span></div><div class="m">'+l1+l2+'</div></div>';
   });
   var sp=si.last&&si.last.teams.filter(isSpurs)[0],op=si.last&&si.last.teams.filter(function(t){return !isSpurs(t)})[0];
   var lastHtml=sp&&op?'<b class="'+((sp.win||Number(sp.score)>Number(op.score))?'W':'L')+'">'+((sp.win||Number(sp.score)>Number(op.score))?'W':'L')+' '+esc(sp.score)+'–'+esc(op.score)+'</b> '+(sp.home?'vs ':'@ ')+esc(op.name):'—';
   var next=si.next,oppNext=next&&next.teams.filter(function(t){return !isSpurs(t)})[0],homeNext=next&&next.teams.filter(isSpurs)[0];
   var stk=spursStreak(),rec=si.rec||'—';
   var nextHtml=next&&oppNext?'<b>'+(homeNext.home?'vs ':'@ ') +esc(oppNext.name)+'</b> · <span id="spursMiniCd" data-t="'+next.date.getTime()+'">--</span>':'—';
-  var mini='<div class="tile spurs-mini"><div class="h"><img class="sm-logo" src="https://a.espncdn.com/i/teamlogos/nba/500/sa.png" alt="Spurs"><span>SAN ANTONIO SPURS</span></div><div class="m"><div>Record: <b>'+esc(rec)+'</b>'+(stk?' <em class="stk">'+esc(stk)+'</em>':'')+'</div><div>Next: '+nextHtml+'</div><div>Last: '+lastHtml+'</div></div></div>';
+  var mini='<div class="tile spurs-mini"><div class="h"><img class="team-logo" src="https://a.espncdn.com/i/teamlogos/nba/500/sa.png" alt="Spurs"><span>SAN ANTONIO SPURS</span></div><div class="m"><div>Record: <b>'+esc(rec)+'</b>'+(stk?' <em class="stk">'+esc(stk)+'</em>':'')+'</div><div>Next: '+nextHtml+'</div><div>Last: '+lastHtml+'</div></div></div>';
   h=mini+h;
   setH($('tiles'),h||'<div class="empty">Loading…</div>');
 }

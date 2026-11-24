@@ -697,8 +697,9 @@ function renderFoot(){
 }
 function tick(){
   var n=new Date();
-  $('time').textContent=n.toLocaleTimeString('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',second:'2-digit'});
-  $('date').textContent=n.toLocaleDateString('en-US',{timeZone:TZ,weekday:'long',month:'long',day:'numeric',year:'numeric'})+' · Pacific';
+  var timeEl=$('time'),dateEl=$('date');
+  if(timeEl)timeEl.textContent=n.toLocaleTimeString('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',second:'2-digit'});
+  if(dateEl)dateEl.textContent=n.toLocaleDateString('en-US',{timeZone:TZ,weekday:'long',month:'long',day:'numeric',year:'numeric'})+' · Pacific';
   var c=$('cd');if(c){
     var ms=Number(c.getAttribute('data-t'))-Date.now();
     if(ms<=0)c.textContent='Tip-off!';

@@ -246,16 +246,7 @@ a.watch.lg{font-size:18px;padding:4px 14px;margin-top:8px}
     <section id="std-sec"><h2>STANDINGS<span class="tb" id="stdTabs"><button data-std="nba" class="on">NBA</button><button data-std="nfl">NFL</button></span></h2><div class="scroll" id="stdBody"><div class="empty">Loading standings…</div></div></section>
   </div>
 </main>
-<div class="bar" id="bar">
-  <button data-lg="all" class="on">All leagues</button>
-  <button data-lg="nba">NBA</button><button data-lg="nfl">NFL</button><button data-lg="cfb">College FB</button><button data-lg="cvb">Volleyball</button><button data-lg="wnba">WNBA</button>
-  <span class="sep"></span>
-  <button id="favBtn" class="fv">★ Favorites only</button>
-  <button id="compBtn">Compact</button>
-  <button id="refBtn">Refresh</button>
-  <button id="fsBtn">Full screen</button>
-  <span id="spin"></span>
-</div>
+
 <footer id="foot"></footer>
 
 <script>
@@ -297,8 +288,7 @@ function favRank(g){var o=favOf(g);return o?o.r:99}
 function isFav(g){return favOf(g)!==null}
 function isRanked(g){return g.teams.some(function(t){return t.rank})}
 function curated(g){return favRank(g)<CORE||isRanked(g)}
-function vis(g){var l=S.lg,ok=l==='all'||g.lg===l;
-  return ok&&(!S.fav||isFav(g))}
+function vis(g){return true}
 
 function norm(ev,lg){
   var c=(ev.competitions||[])[0];if(!c)return null;
@@ -331,7 +321,7 @@ function merge(id){
   S.data[id]={ok:ok,err:err,games:Object.keys(m).map(function(k){return m[k]})};
 }
 async function loadAll(force){
-  $('spin').classList.add('on');
+  var spin=$('spin');if(spin)spin.classList.add('on');
   var jobs=[];
   LEAGUES.forEach(function(L){
     CACHE[L.id]=CACHE[L.id]||{};
@@ -357,7 +347,7 @@ async function loadAll(force){
   jobs.push(loadStandings(force).then(render));
   jobs.push(loadStreams().then(render));
   await Promise.all(jobs);
-  S.upd=new Date();$('spin').classList.remove('on');render();
+  S.upd=new Date();var spin=$('spin');if(spin)spin.classList.remove('on');render();
 }
 
 /* ---- standings (NBA + NFL only) ---- */
@@ -597,8 +587,8 @@ function render(){
   var loaded=Object.keys(S.data).length>0,eh=errs.join('');
   renderSectionFilters();
   var source=all();
-  var tg=source.filter(function(x){return dk(x.date)===today&&(S.todayLg==='all'||x.lg===S.todayLg)&&(!S.fav||isFav(x))}).sort(byLgSoon);
-  var up=source.filter(function(x){var d=dk(x.date);return x.state==='pre'&&d>today&&d<=end&&(S.upLg==='all'||x.lg===S.upLg)&&(!S.fav||isFav(x))}).sort(byGrpSoon);
+  var tg=source.filter(function(x){return dk(x.date)===today&&(S.todayLg==='all'||x.lg===S.todayLg)}).sort(byLgSoon);
+  var up=source.filter(function(x){var d=dk(x.date);return x.state==='pre'&&d>today&&d<=end&&(S.upLg==='all'||x.lg===S.upLg)}).sort(byGrpSoon);
   $('todayBody').innerHTML=eh+(loaded?lgList(tg,'No '+(S.todayLg==='all'?'':LBL[S.todayLg]+' ')+'games today.'):'<div class="empty">Loading games…</div>');
   $('upBody').innerHTML=loaded?list(up,true,'No '+(S.upLg==='all'?'':LBL[S.upLg]+' ')+'games in the next 7 days.'):'<div class="empty">Loading games…</div>';
   renderSpot();renderTiles();renderStandings();renderFoot();
@@ -784,12 +774,7 @@ function tick(){
   });
 }
 function setOn(sel,fn){document.querySelectorAll(sel).forEach(function(b){b.classList.toggle('on',fn(b))})}
-document.querySelectorAll('[data-lg]').forEach(function(b){b.onclick=function(){S.lg=b.getAttribute('data-lg');setOn('[data-lg]',function(x){return x===b});render()}});
 document.querySelectorAll('[data-std]').forEach(function(b){b.onclick=function(){S.std=b.getAttribute('data-std');setOn('[data-std]',function(x){return x===b});renderStandings();$('stdBody').scrollTop=0}});
-$('favBtn').onclick=function(){S.fav=!S.fav;this.classList.toggle('on',S.fav);render()};
-$('compBtn').onclick=function(){this.classList.toggle('on',document.body.classList.toggle('compact'))};
-$('refBtn').onclick=function(){loadAll(true)};
-$('fsBtn').onclick=function(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(function(){})};
 tick();setInterval(tick,1000);
 loadAll();setInterval(function(){loadAll()},60000);
 setInterval(function(){if(spursInfo().live)renderTiles()},20000);

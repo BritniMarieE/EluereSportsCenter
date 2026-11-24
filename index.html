@@ -650,6 +650,7 @@ function renderTiles(){
     var live=gs.filter(function(g){return g.state==='in'})[0],next=gs.filter(function(g){return g.state==='pre'})[0],
         last=gs.filter(function(g){return g.state==='post'}).pop(),cur=live||next,ref=cur||last,logo='';
     if(ref){var mt=ref.teams.filter(has)[0];logo=mt?mt.logo:''}
+    if(!logo){var fixedLogos={'San Antonio Spurs':'https://a.espncdn.com/i/teamlogos/nba/500/sa.png','Portland Trail Blazers':'https://a.espncdn.com/i/teamlogos/nba/500/por.png','Seattle Seahawks':'https://a.espncdn.com/i/teamlogos/nfl/500/sea.png','Houston Texans':'https://a.espncdn.com/i/teamlogos/nfl/500/hou.png','Texas Longhorns':'https://a.espncdn.com/i/teamlogos/ncaa/500/251.png'};logo=fixedLogos[f.n]||''}
     var sd=function(g){var m=g.teams.filter(has)[0],o=g.teams.filter(function(t){return t!==m})[0]||m;return{m:m,o:o,p:m.home?'vs ':'@ '}};
     var l1='<span style="color:var(--dim)">No games in this window</span>',l2='';
     var cond=live?tileCond(live,has):null;
